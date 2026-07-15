@@ -29,7 +29,7 @@ sURL3k-VisURLX/
 
 ## The three modules
 
-VisURLX processes each URL location with its own module.
+VisURLX extracts each URL from a scholarly PDF together with its target sentence and surrounding context, across three document locations (body, footnote, and reference),
 
 - **Body.** A single prompt reads the page image and returns each body URL with
   its target sentence and the neighbouring sentences.
