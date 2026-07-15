@@ -58,30 +58,4 @@ For each pipeline the script prints a per-class table with precision, recall,
 and F1, followed by the macro average (unweighted mean of the per-class F1) and
 the micro average (computed from the pooled counts).
 
-```
-  Gpt-5-mini
-    class                           P      R     F1
-    general-url                 0.911  0.799  0.852
-    third-party-dataset         0.781  0.751  0.766
-    author-provided-dataset     0.639  0.676  0.657
-    third-party-software        0.883  0.759  0.816
-    author-provided-software    0.664  0.833  0.739
-    project                     0.500  0.625  0.556
-    MACRO                                     0.731
-    MICRO                       0.877  0.789  0.831
-```
 
-## Results (variant 1, fine)
-
-Micro-averaged F1 per pipeline:
-
-| pipeline    | P     | R     | F1    |
-|-------------|-------|-------|-------|
-| Gpt-5-mini  | 0.877 | 0.789 | 0.831 |
-| GROBID      | 0.879 | 0.685 | 0.770 |
-| olmOCR      | 0.826 | 0.593 | 0.690 |
-| Qwen        | 0.793 | 0.651 | 0.715 |
-| PyMuPDF     | 0.770 | 0.518 | 0.620 |
-
-The Gpt-5-mini micro F1 of 0.831 is the 83.1% weighted F1 reported in the paper.
-Per-class numbers are printed when the script runs.
