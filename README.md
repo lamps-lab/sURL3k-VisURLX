@@ -22,9 +22,9 @@ dataset, the annotation guideline, and the evaluation scripts.
 │   ├── evaluate_urls.py
 │   ├── evaluate_heuristic.py
 │   └── evaluate-VisURLX.py
-├── URL-evaluation/                 predictions for evaluate_urls.py
-├── heuristic-evaluation/           predictions for evaluate_heuristic.py
-├── VisURLX-evaluation/             predictions for evaluate-VisURLX.py
+├── URL-evaluation/                 URL extraction output from each pipeline
+├── heuristic-evaluation/           heuristic baseline extraction output
+├── VisURLX-evaluation/             VisURLX extraction output
 ├── URL-classification-evaluation/  OADS-URL classification evaluation
 └── EVALUATION.md                   evaluation procedure and commands
 ```
