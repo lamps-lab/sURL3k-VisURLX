@@ -107,8 +107,3 @@ more than once, sURL-3K keeps one occurrence as the representative target
 sentence and retains the restored target sentences of the remaining occurrences
 in `accepted_set.csv`.
 
-To assess annotation reliability, the same annotator relabeled the URL class of
-every instance three months after the first pass, without access to the earlier
-labels. The two passes agree for 97.4% of instances (κ = 0.95). The annotation
-was additionally cross-checked against an independent MLLM annotator on 15.8% of
-sURL-3K.
