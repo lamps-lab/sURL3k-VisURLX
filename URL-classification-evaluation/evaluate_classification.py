@@ -1,3 +1,29 @@
+#!/usr/bin/env python3
+"""
+End-to-end (extraction -> EnSU classification) scoring.
+Per-class P / R / F1 + macro + micro, for every pipeline.
+
+Match unit = (paper_id, url).
+  recovery match rules: stage0/stage3 (exact URL), stage2 (near URL), fallback.
+  genuine_fp = corrupted string whose twin gold URL and label are known.
+  TP = gold unit recovered by a VALID pass AND labeled correctly.
+  FN = N - TP.  FP = genuine_fp (always) + stage2 (variants 1-2) + mislabeled valid.
+
+VARIANTS
+  1: stage2 -> FP ;    key distinct (paper_id,url)     2: stage2 -> FP ;    key gold rows
+  3: stage2 -> valid ; key distinct (paper_id,url)     4: stage2 -> valid ; key gold rows
+
+GRANULARITY (label mapping applied to BOTH gold and predicted labels, then scored):
+  fine   : 6 classes (general-url, third/author dataset, third/author software, project)
+  coarse : 4 groups  (general-url; dataset=1+2; software=3+4; project)   [Option A]
+  binary : 2 groups  (OADS = classes 1-5; not-OADS = general-url)
+
+Usage:
+  python3 end_to_end_variants.py --gold GOLD_DIR --pred_dir PRED_DIR
+      [--variant N] [--granularity fine|coarse|binary] [--out perclass.csv]
+Pipelines auto-discovered from PRED_DIR/*_all_predictions.csv (excludes *_gold_*).
+Requires exact_url_evaluator.py importable.
+"""
 import os, glob, argparse, collections
 import pandas as pd
 import exact_url_evaluator as E
@@ -5,6 +31,7 @@ import exact_url_evaluator as E
 FINE={0:"general-url",1:"third-party-dataset",2:"author-provided-dataset",
       3:"third-party-software",4:"author-provided-software",5:"project"}
 N2ID={v:k for k,v in FINE.items()}
+# label-id -> group-name, and display order, per granularity
 GRAN={
  "fine":   ({i:FINE[i] for i in range(6)},
             [FINE[i] for i in range(6)]),
@@ -20,15 +47,15 @@ def prf(tp,fp,fn):
 
 def load_gold(gold_dir):
     pu=collections.defaultdict(collections.Counter); rows=[]
-    for f in glob.glob(os.path.join(gold_dir,"*-gold.csv")):
+    for f in sorted(glob.glob(os.path.join(gold_dir,"*-gold.csv"))):
         d=pd.read_csv(f,dtype=str,keep_default_na=False)
         for _,r in d.iterrows():
             if str(r.get("split","")).strip()!="test" or str(r.get("Label","")).strip()=="": continue
             c=int(float(r["Label"].split('.')[0])); pid=E._normalize_paper_id(r["paper_id"])
             rows.append(c)
             for u in E._extract_norm_urls_from_field(r["url"]): pu[(pid,u)][c]+=1
-    gold_pu={k:v.most_common(1)[0][0] for k,v in pu.items()}
-    return gold_pu, rows
+    gold_pu={k:v.most_common(1)[0][0] for k,v in pu.items()}    # fine class ids
+    return gold_pu, rows                                        # rows = list of fine class ids
 
 def discover(pred_dirs):
     out={}
@@ -39,9 +66,9 @@ def discover(pred_dirs):
             out[b[:-len("_all_predictions.csv")]]=f
     return out
 
-def score(path, gran, gold_pu, gold_rows_fine):
+def score(path, variant, gran, gold_pu, gold_rows_fine):
     MAP,ORDER=GRAN[gran]
-    stage2_valid = False; key_pu = True
+    stage2_valid = variant in (3,4); key_pu = variant in (1,3)
     d=pd.read_csv(path,dtype=str,keep_default_na=False)
     if key_pu:
         gold={k:MAP[v] for k,v in gold_pu.items()}
@@ -82,23 +109,35 @@ def score(path, gran, gold_pu, gold_rows_fine):
         FN={g:Nc[g]-TP[g] for g in ORDER}
         return TP,FP,FN,Nc,ORDER
 
+DESC={1:"stage2->FP, key (paper,url)",2:"stage2->FP, key rows",
+      3:"stage2 valid, key (paper,url)",4:"stage2 valid, key rows"}
+
 def main():
     ap=argparse.ArgumentParser()
-    ap.add_argument("--gold",default=".")
-    ap.add_argument("--pred_dir",nargs="+",default=["."])
+    ap.add_argument("--gold",required=True)
+    ap.add_argument("--pred_dir",required=True,nargs="+",help="one or more folders containing *_all_predictions.csv")
     ap.add_argument("--granularity",choices=["fine","coarse","binary"],default="fine")
+    ap.add_argument("--out")
     a=ap.parse_args()
     gold_pu,gold_rows=load_gold(a.gold); pipes=discover(a.pred_dir)
+    print(f"variant {1} ({DESC[1]}) | granularity {a.granularity} | pipelines: {list(pipes)}")
+    csv=[]
     for name,path in pipes.items():
-        TP,FP,FN,Nc,ORDER=score(path,a.granularity,gold_pu,gold_rows)
+        TP,FP,FN,Nc,ORDER=score(path,1,a.granularity,gold_pu,gold_rows)
         print(f"\n  {name}")
         print(f"    {'class':<26}{'P':>7}{'R':>7}{'F1':>7}")
         Fs=[]; tT=tF=tN=0
         for g in ORDER:
             P,R,Fl=prf(TP[g],FP[g],FN[g]); Fs.append(Fl); tT+=TP[g];tF+=FP[g];tN+=FN[g]
             print(f"    {g:<26}{P:>7.3f}{R:>7.3f}{Fl:>7.3f}")
+            csv.append([1,a.granularity,name,g,TP[g],FP[g],FN[g],round(P,4),round(R,4),round(Fl,4)])
         miP,miR,miF=prf(tT,tF,tN)
         print(f"    {'MACRO':<26}{'':7}{'':7}{sum(Fs)/len(Fs):>7.3f}")
         print(f"    {'MICRO':<26}{miP:>7.3f}{miR:>7.3f}{miF:>7.3f}")
+        csv.append([1,a.granularity,name,"MACRO","","","","","",round(sum(Fs)/len(Fs),4)])
+        csv.append([1,a.granularity,name,"MICRO",tT,tF,tN,round(miP,4),round(miR,4),round(miF,4)])
+    if a.out:
+        pd.DataFrame(csv,columns=["variant","granularity","pipeline","class","TP","FP","FN","P","R","F1"]).to_csv(a.out,index=False)
+        print(f"\n-> {a.out}")
 
 if __name__=="__main__": main()
