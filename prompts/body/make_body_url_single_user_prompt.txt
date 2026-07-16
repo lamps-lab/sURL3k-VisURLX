@@ -1,0 +1,12 @@
+PAGE 5 — BODY URL DETECT + TARGET SENTENCE + CONTEXT
+IMAGE 0 = bottom crop of the PREVIOUS page (page 4). Use ONLY to complete a URL/sentence that began there and continues onto the current page. Do NOT detect URLs on it.
+IMAGE 1 = the FULL CURRENT page. Detect every body URL on THIS page only, and for each return its full target sentence plus paragraph-local context, per the system instructions.
+IMAGE 2 = top crop(s) of the FOLLOWING page(s). Use ONLY to finish a URL/sentence that starts on the current page and spills past its bottom. Do NOT detect URLs on them.
+Neighbour crops are completion aids only — never a detection surface.
+Use the page text layer only to verify exact URL/DOI characters when visually needed.
+Return JSON that matches the provided schema.
+
+PRIMARY PAGE TEXT LAYER (verbatim — current page only)
+-----
+<<PAGE TEXT-LAYER INSERTED HERE>>
+-----
