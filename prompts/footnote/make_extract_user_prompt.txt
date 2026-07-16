@@ -1,0 +1,19 @@
+PRIMARY PAGE: 5
+
+URL footnotes already detected on this page:
+[
+  {
+    "marker": "3",
+    "text": "See https://example.org/tool for details.",
+    "url": "https://example.org/tool"
+  }
+]
+
+Page-level layout hints (trust the image over these):
+{}
+
+IMAGE 0 = bottom of the previous page.
+IMAGE 1 = the full primary page. Every footnote marker is here.
+IMAGE 2+ = top of the following page(s).
+
+For each footnote above, find its citing sentence in the body text of IMAGE 1 by its superscript marker, complete the sentence across pages if it runs over, splice the footnote content in at the marker position, and return the preceding and trailing sentences of the same paragraph. Return strict JSON.
