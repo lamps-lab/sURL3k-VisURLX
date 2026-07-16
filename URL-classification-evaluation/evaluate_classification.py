@@ -19,15 +19,16 @@ def prf(tp,fp,fn):
     return P,R,(2*P*R/(P+R) if P+R else 0.0)
 
 def load_gold(gold_dir):
-    pu=collections.defaultdict(collections.Counter)
+    pu=collections.defaultdict(collections.Counter); rows=[]
     for f in glob.glob(os.path.join(gold_dir,"*-gold.csv")):
         d=pd.read_csv(f,dtype=str,keep_default_na=False)
         for _,r in d.iterrows():
             if str(r.get("split","")).strip()!="test" or str(r.get("Label","")).strip()=="": continue
             c=int(float(r["Label"].split('.')[0])); pid=E._normalize_paper_id(r["paper_id"])
+            rows.append(c)
             for u in E._extract_norm_urls_from_field(r["url"]): pu[(pid,u)][c]+=1
     gold_pu={k:v.most_common(1)[0][0] for k,v in pu.items()}
-    return gold_pu
+    return gold_pu, rows
 
 def discover(pred_dirs):
     out={}
@@ -38,31 +39,48 @@ def discover(pred_dirs):
             out[b[:-len("_all_predictions.csv")]]=f
     return out
 
-def score(path, gran, gold_pu):
+def score(path, gran, gold_pu, gold_rows_fine):
     MAP,ORDER=GRAN[gran]
+    stage2_valid = False; key_pu = True
     d=pd.read_csv(path,dtype=str,keep_default_na=False)
-    gold={k:MAP[v] for k,v in gold_pu.items()}
-    Nc=collections.Counter(gold.values())
-    pred=collections.defaultdict(lambda:{"valid":[],"fp":[]})
-    for _,r in d.iterrows():
-        pl=N2ID.get(r["pred_label_name"].strip())
-        if pl is None: continue
-        pl=MAP[pl]; mr=r["match_rule"]; pid=E._normalize_paper_id(r["paper_id"])
-        if mr=="genuine_fp":
-            for u in E._extract_norm_urls_from_field(r["url_output"] or r["url_output_norm"]): pred[(pid,u)]["fp"].append(pl)
-        elif mr=="stage2":
-            for u in E._extract_norm_urls_from_field(r["url_gold"] or r["url_gold_norm"]): pred[(pid,u)]["fp"].append(pl)
-        else:
-            for u in E._extract_norm_urls_from_field(r["url_gold"] or r["url_gold_norm"]): pred[(pid,u)]["valid"].append(pl)
-    TP=collections.Counter(); FP=collections.Counter()
-    for k in set(gold)|set(pred):
-        gc=gold.get(k); vlab=pred[k]["valid"]; flab=pred[k]["fp"]
-        if gc is not None and vlab and majority(vlab)==gc: TP[gc]+=1
-        else:
-            wrong=vlab+flab
-            if wrong: FP[majority(wrong)]+=1
-    FN={g:Nc[g]-TP[g] for g in ORDER}
-    return TP,FP,FN,Nc,ORDER
+    if key_pu:
+        gold={k:MAP[v] for k,v in gold_pu.items()}
+        Nc=collections.Counter(gold.values())
+        pred=collections.defaultdict(lambda:{"valid":[],"fp":[]})
+        for _,r in d.iterrows():
+            pl=N2ID.get(r["pred_label_name"].strip())
+            if pl is None: continue
+            pl=MAP[pl]; mr=r["match_rule"]; pid=E._normalize_paper_id(r["paper_id"])
+            if mr=="genuine_fp":
+                for u in E._extract_norm_urls_from_field(r["url_output"] or r["url_output_norm"]): pred[(pid,u)]["fp"].append(pl)
+            elif mr=="stage2" and not stage2_valid:
+                for u in E._extract_norm_urls_from_field(r["url_gold"] or r["url_gold_norm"]): pred[(pid,u)]["fp"].append(pl)
+            else:
+                for u in E._extract_norm_urls_from_field(r["url_gold"] or r["url_gold_norm"]): pred[(pid,u)]["valid"].append(pl)
+        TP=collections.Counter(); FP=collections.Counter()
+        for k in set(gold)|set(pred):
+            gc=gold.get(k); vlab=pred[k]["valid"]; flab=pred[k]["fp"]
+            if gc is not None and vlab and majority(vlab)==gc: TP[gc]+=1
+            else:
+                wrong=vlab+flab
+                if wrong: FP[majority(wrong)]+=1
+        FN={g:Nc[g]-TP[g] for g in ORDER}
+        return TP,FP,FN,Nc,ORDER
+    else:
+        Nc=collections.Counter(MAP[c] for c in gold_rows_fine)
+        TP=collections.Counter(); FP=collections.Counter()
+        for _,r in d.iterrows():
+            pl=N2ID.get(r["pred_label_name"].strip())
+            if pl is None: continue
+            pl=MAP[pl]; mr=r["match_rule"]
+            if mr=="genuine_fp" or (mr=="stage2" and not stage2_valid): FP[pl]+=1
+            else:
+                gc=N2ID.get(r["gold_label_name"].strip())
+                gc=MAP[gc] if gc is not None else None
+                if gc==pl: TP[gc]+=1
+                else: FP[pl]+=1
+        FN={g:Nc[g]-TP[g] for g in ORDER}
+        return TP,FP,FN,Nc,ORDER
 
 def main():
     ap=argparse.ArgumentParser()
@@ -70,9 +88,9 @@ def main():
     ap.add_argument("--pred_dir",nargs="+",default=["."])
     ap.add_argument("--granularity",choices=["fine","coarse","binary"],default="fine")
     a=ap.parse_args()
-    gold_pu=load_gold(a.gold); pipes=discover(a.pred_dir)
+    gold_pu,gold_rows=load_gold(a.gold); pipes=discover(a.pred_dir)
     for name,path in pipes.items():
-        TP,FP,FN,Nc,ORDER=score(path,a.granularity,gold_pu)
+        TP,FP,FN,Nc,ORDER=score(path,a.granularity,gold_pu,gold_rows)
         print(f"\n  {name}")
         print(f"    {'class':<26}{'P':>7}{'R':>7}{'F1':>7}")
         Fs=[]; tT=tF=tN=0
