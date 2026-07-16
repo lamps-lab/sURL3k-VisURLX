@@ -1,0 +1,62 @@
+YOUR TASK:
+Extract EVERY footnote printed on this image that contains at least one web URL.
+
+WHAT COUNTS AS A URL:
+Any address that identifies a resource retrievable over the web, with or without an
+explicit scheme. This covers scheme-prefixed addresses (http, https, ftp, and similar
+transfer schemes), addresses beginning with "www.", and bare domain names, with or
+without a path. Never skip an address because it carries no scheme, and never skip one
+because of which site it points to.
+
+NOT a URL:
+  - a local file path with no domain, such as /home/user/file.txt
+  - an email address, with or without a "mailto:" prefix
+
+  • BIBLIOGRAPHIC REFERENCES — this is the most important exclusion:
+    Any entry that contains BOTH of the following is a bibliographic reference — skip it entirely,
+    even if it also contains a URL:
+      1. One or more author names (surnames + initials, or full names)
+      2. A publication venue + year (journal, conference, book, report, volume, pages, year)
+
+    This applies regardless of how the entry is formatted — it may or may not be numbered,
+    may use [N], N., or no prefix at all. The numbering style is irrelevant.
+    The CONTENT is what matters: author names + venue/year = reference, always skip.
+
+    A FOOTNOTE contains none of that. It is short text whose primary content is a URL
+    or a brief functional description + URL, with no author names or publication venue.
+
+      FOOTNOTE (include):   "4 http://example.org/p/gridsolver"
+                            "* Available at http://tools.example.net/parser"
+                            "¹⁷ http://data.example.org/archive/spectra"
+ 
+      REFERENCE (skip):     "[4] A. Fenwick, R. Oduya, T. Marsh. A sparse grid method for... 2012."
+                            "Halvorsen L, Iyer M. A revised algorithm for adaptive meshing. 1997."
+                            "17. L. Halvorsen and M. Iyer. Journal of Numerical Methods, 6:229–269, 1997."
+
+    Ask yourself: "Does this entry describe a published work by named authors?"
+    If yes → REFERENCE, skip. If no → potential FOOTNOTE, check for URL.
+
+FOR EACH QUALIFYING FOOTNOTE:
+  marker        = the footnote marker exactly as printed (number, letter, *, †, ‡, §, ¶, etc.)
+  footnote_text = the COMPLETE verbatim footnote text — every single word as printed.
+                  Do NOT summarise, shorten, or paraphrase even one word.
+                  If a URL is split across two lines by a hyphen or line-break, join it into
+                  the single correct unbroken URL in footnote_text.
+  urls          = list of every URL/web address in this footnote (all of them)
+
+ACCURACY RULES — NON-NEGOTIABLE:
+• NEVER invent, guess, or fabricate any URL, word, or marker.
+• If there is no clearly visible footnote marker attached to the entry, do not extract it.
+• NEVER truncate a URL with "..." — transcribe it fully as printed.
+• NEVER skip a footnote because its URL lacks "http" or uses an unusual scheme.
+• If a footnote number/letter is printed directly before the URL with no space (e.g. "1http://..."),
+  set marker to just the number/letter and strip the leading marker digit from footnote_text and urls.
+• If part of a URL is genuinely illegible and you cannot form a usable URL, skip that footnote
+  entirely — a partial URL is worse than no URL.
+• PRESERVE www. EXACTLY — if the printed URL starts with "www." keep it; if it does not,
+  do not add it. Never normalise http://www.example.com to http://example.com or vice versa.
+  Transcribe the URL character-for-character as it is physically printed on the page.
+• If a URL is wrapped in parentheses like (http://example.com/path), transcribe the URL
+  without the surrounding parentheses.
+
+Return strict JSON matching the schema. If no qualifying footnotes exist, return has_url_footnotes=false and footnotes=[].
