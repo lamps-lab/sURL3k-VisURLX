@@ -83,7 +83,7 @@ Micro-averaged F1 per pipeline.
 | Qwen        | 0.793 | 0.650 | 0.714 |
 | PyMuPDF     | 0.770 | 0.518 | 0.620 |
 
-The Gpt-5-mini micro F1 of 0.831 is the 83.1% weighted F1 reported in the paper.
+
 
 ### coarse (Gpt-5-mini)
 
