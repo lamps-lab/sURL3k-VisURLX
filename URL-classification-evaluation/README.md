@@ -44,8 +44,7 @@ scoring. All three commands report P, R, and F1 per class for every pipeline.
 ### fine (default): six classes
 
 ```
-python3 evaluate_classification.py
-python3 evaluate_classification.py --granularity fine
+python3 evaluate_classification.py --gold gold --pred_dir classification-evaluation --granularity fine
 ```
 
 Classes: general-url, third-party-dataset, author-provided-dataset,
@@ -54,7 +53,7 @@ third-party-software, author-provided-software, project.
 ### coarse: four groups
 
 ```
-python3 evaluate_classification.py --granularity coarse
+python3 evaluate_classification.py --gold gold --pred_dir classification-evaluation --granularity coarse
 ```
 
 Groups the two dataset classes into `dataset` and the two software classes into
@@ -63,7 +62,7 @@ Groups the two dataset classes into `dataset` and the two software classes into
 ### binary: two groups
 
 ```
-python3 evaluate_classification.py --granularity binary
+python3 evaluate_classification.py --gold gold --pred_dir classification-evaluation --granularity binary
 ```
 
 Groups all five OADS classes (the dataset, software, and project classes) into
