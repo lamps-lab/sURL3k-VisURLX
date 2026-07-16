@@ -1,0 +1,17 @@
+PRIMARY PAGE: 5
+
+CITATIONS to restore (1 total):
+[
+  {
+    "marker": "[4]",
+    "reference": "P. Bonzini et al. GNU Lightning. http://www.gnu.org/software/lightning/, 2010.",
+    "url": "http://www.gnu.org/software/lightning/",
+    "snippet": "we use the GNU Lightning library [4] to"
+  }
+]
+
+IMAGE 0 = bottom strip of the PREVIOUS page — use ONLY to recover a sentence that started there and continues here.
+IMAGE 1 = full primary page.
+IMAGE 2+ = top strip(s) of following page(s) for sentence completion.
+
+For each citation entry: use citing_fragment to locate its specific citing sentence on the page, reconstruct it fully across page boundaries if needed, then replace the marker INLINE with the reference entry. Produce exactly one output item per input entry. Return strict JSON.

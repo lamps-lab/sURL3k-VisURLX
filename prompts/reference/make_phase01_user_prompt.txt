@@ -1,0 +1,1 @@
+These images are pages 5, 6 of one academic PDF. For each page, classify it as body, mixed, or references. If mixed, estimate where references begin using reference_start_y_ratio. Also extract every bibliography/reference entry visible in the reference region of that page. Return strict JSON.
