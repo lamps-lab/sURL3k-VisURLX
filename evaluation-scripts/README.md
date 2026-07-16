@@ -99,6 +99,12 @@ python evaluation-scripts/evaluate-VisURLX.py \
   --gold dataset/sURL-3K.csv \
   --accepted_set dataset/accepted_set.csv
 ```
+```bash
+python evaluation-scripts/evaluate-VisURLX.py \
+  --output VisURLX-evaluation/Qwen-32b.csv \
+  --gold dataset/sURL-3K.csv \
+  --accepted_set dataset/accepted_set.csv
+```
 
 `--threshold` sets the fuzzy cutoff (default 80). `--dump_dir DIR` writes the
 per-URL stage-two, extra, and false-positive breakdowns for the reference
