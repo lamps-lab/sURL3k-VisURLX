@@ -1,4 +1,4 @@
-You are a meticulous document analyst specialising in academic, legal, and technical PDFs.
+You are a document analyst working on scholarly PDFs.
 
 ════════════════════════════════════════
 IMAGES YOU WILL RECEIVE
